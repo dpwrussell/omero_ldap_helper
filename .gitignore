@@ -1,0 +1,5 @@
+ldap_details.cfg
+omero_details.cfg
+*.pyc
+*.swp
+__pycache__
