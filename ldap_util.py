@@ -18,25 +18,19 @@ class LDAPSearch(object):
         self.l.protocol_version = ldap.VERSION3
         self.l.simple_bind_s(self.username, self.password)
 
-
-
     def _search(self, filter, name):
 
         attrs = ['cn']
 
         results = self.l.search_s( self.basedn, ldap.SCOPE_SUBTREE, filter, attrs )
 
-        found = False
+        found = []
         for result in results:
             if result[0] is None:
                 pass # Ignoring referral
             else:
                 cn = result[1]['cn'][0]
-                if cn.lower() == name.lower():
-                    found = True
-                else:
-                    error_msg = '%s not found, but there were search results, should not happen' %name
-                    raise Exception(error_msg)
+                found.append(cn)
 
         return found
 
@@ -50,19 +44,4 @@ class LDAPSearch(object):
 
     def userEmailSearch(self, cn_email):
         filter = '(&(objectClass=user)(mail=%s))' %cn_email
-
-        attrs = ['cn']
-
-        results = self.l.search_s( self.basedn, ldap.SCOPE_SUBTREE, filter, attrs )
-
-        found_cn = ""
-        found_cn_n = 0
-        for result in results:
-            if result[0] is None:
-                pass # Ignoring referral
-            else:
-                found_cn = result[1]['cn'][0]
-                found_cn_n = found_cn_n + 1
-
-        if found_cn_n > 0:
-            return found_cn, found_cn_n
+        return self._search(filter, cn_email)

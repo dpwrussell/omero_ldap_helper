@@ -26,35 +26,59 @@ if not connected:
     sys.exit(1)
 
 session = conn.getSession()
-
-
 queryService = conn.getQueryService()
-
 params = Parameters()
-query = "from Experimenter"
-
-
-experimenters = queryService.findAllByQuery(query, params)
-
 ldapSearch = LDAPSearch(ldap_details)
+
+# Check users
+query = "from Experimenter"
+experimenters = queryService.findAllByQuery(query, params)
+print('Experimenters')
 
 for experimenter in experimenters:
 
 	output = '%s' %experimenter.omeName.getValue()
-	if experimenter.email:
+	if experimenter.email and experimenter.email.getValue().strip() != '':
 		output = output + ', %s ' %experimenter.email.getValue()
 
-	if ldapSearch.userSearch(experimenter.omeName.getValue()):
+	if len(ldapSearch.userSearch(experimenter.omeName.getValue())) == 1:
 		output = output + ', OK'
 	else:
 		output = output + ', MISSING'
 		if experimenter.email:
 			
-			cn = ldapSearch.userEmailSearch(experimenter.email.getValue())
-			if cn is not None:
+			cns = ldapSearch.userEmailSearch(experimenter.email.getValue())
+			if len(cns) == 1:
+				output = output + ' (Probably: %s)' %cns[0]
+			elif len(cns) > 1:
+				output = output + ' (Multiple users for this email address)'
+	print output
 
-				if cn[1] == 1:
-					output = output + ' (Probably: %s)' %cn[0]
-				elif cn[1] > 1:
-					output = output + ' (Multiple users for this email address)'
+# Check groups
+query = "from ExperimenterGroup"
+groups = queryService.findAllByQuery(query, params)
+print('Groups')
+for group in groups:
+
+	output = '%s' %group.name.getValue()
+	if group.description and group.description.getValue().strip() != '':
+		output = output + ', (%s) ' %group.description.getValue()
+
+	# Get other groups which might be appropriate
+	cns = ldapSearch.groupSearch(group.name.getValue())
+	found = False
+	if len(cns) == 1:					# Just 1 group
+		output = output + ', OK'
+		found = True
+	else:
+		output = output + ', MISSING'
+
+	# Check for similar group names
+	cns = ldapSearch.groupSearch('*' + group.name.getValue() + '*')	
+	if len(cns) > 1 or (found == False and len(cns) > 0):
+		ouput = output + ' (Possible groups: ' + ','.join(cns)
+		for cn in cns:
+			output = output + ' %s '
+		output = output + ')'
+
 	print output
