@@ -78,7 +78,7 @@ for group in groups:
 	if len(cns) > 1 or (found == False and len(cns) > 0):
 		ouput = output + ' (Possible groups: ' + ','.join(cns)
 		for cn in cns:
-			output = output + ' %s '
+			output = output + ' %s ' %cn
 		output = output + ')'
 
 	print output
