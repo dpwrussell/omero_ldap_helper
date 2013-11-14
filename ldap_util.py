@@ -13,7 +13,7 @@ class LDAPSearch(object):
         self.server = config.get('LDAPDetails', 'server')
         self.basedn = config.get('LDAPDetails', 'basedn')
 
-        self.l = ldap.initialize('ldaps://bioch-ad3.bioch.ox.ac.uk')
+        self.l = ldap.initialize(self.server)
 
         self.l.protocol_version = ldap.VERSION3
         self.l.simple_bind_s(self.username, self.password)
